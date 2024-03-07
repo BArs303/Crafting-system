@@ -1,0 +1,23 @@
+44: Enriched Uranium
+2312: Supertensile Plastics
+2463: Nanites
+3683: Oxygen
+3689: Mechanical Parts
+4246: Hydrogen Fuel Block
+4312: Oxygen Fuel Block
+9832: Coolant
+9848: Robotics
+16272: Heavy Water
+16273: Liquid Ozone
+16275: Strontium Clathrates
+17887: Oxygen Isotopes
+17889: Hydrogen Isotopes
+57453: Carbon Fiber
+57454: Oxy-Organic Solvents
+57455: Thermosetting Polymer
+57457: Reinforced Carbon Fiber
+57478: Auto-Integrity Preservation Seal
+16633: Hydrocarbons
+16634: Atmospheric Gases
+16635: Evaporite Deposits
+16636: Silicates
