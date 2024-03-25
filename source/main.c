@@ -1,21 +1,26 @@
 #include "item.h"
-#include "parser.h"
+#include "json.h"
 
 Darray* items_creation();
-void print_element(void *element);
 
 int main()
 {
-	Darray *items;
+	JSON *a = json_parse_file("recipes.txt");
+	printf("%s\n", json_stringify(a));
+	/*Darray *items;
+	Item *a;
 	items = items_creation();
-	print_darray(items, &print_element);
+	a = darray_at_pos(items, 0);
+	add_recipe(a);
+	print_darray(items, &print_element);*/
+
+	
 
 	//need to free array of items
 	return 0;
 }
 
-
-Darray* items_creation()
+/*Darray* items_creation()
 {
 	Item *element;
 	Pobject *tmp;
@@ -42,10 +47,4 @@ Darray* items_creation()
 
 	//need to free parsed_list
 	return items;
-}
-
-void print_element(void *element)
-{
-	print_item((Item*)element);
-	return;
-}
+}*/

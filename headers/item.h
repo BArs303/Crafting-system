@@ -1,9 +1,10 @@
 #include "advanced_types.h"
 
 #define DEFAULT_PRODUCT_QUANTITY 1
+
 typedef struct item Item;
 typedef struct recipe Recipe;
-typedef struct rds Rds;
+typedef struct recipe_component Rcomponent;
 
 struct item
 {
@@ -15,33 +16,38 @@ struct item
 
 struct recipe
 {
-	Rds *products;
-	Rds *components;
+	Set *products;
+	Set *components;
 };
 
-struct rds //recipe data storage
+struct recipe_component
 {
-	Set *items;
-	Darray *quantity;
+	Item *item;
+	int quantity;
 };
+
 
 Item* create_item(int id, char *name);
-void destruct_item(Item *a);
-void destruct_item_and_recipe(Item *a);//do not call this func
 
 void add_recipe(Item *a);
 void add_recipe_with_quantity(Item *a ,int product_quantity);
 void add_recipe_with_opts(Item *a ,int product_quantity, int num_of_components);
-void remove_recipe(Item *a, int index);
-void destruct_recipe(Recipe *a);
 
 void add_product(Recipe *dest, Item *src, int product_quantity);
-void remove_product_by_index(Recipe *a, int item_index);
-void remove_product_by_id(Recipe *a, int id);
-
 void add_component(Recipe *dest, Item *src, int component_quantity);
 
 Recipe* get_recipe(Item *a, int index);
 
 void print_item(Item *a);
 void print_recipe(Recipe *a);
+
+void unload_recipe(Recipe *recipe, FILE *ofs);
+
+/*rewrite all functions
+void destruct_item(Item *a);
+void destruct_item_and_recipe(Item *a);//do not call this func
+void remove_product_by_index(Recipe *a, int item_index);
+void remove_product_by_id(Recipe *a, int id);
+void destruct_recipe(Recipe *a);
+void remove_recipe(Item *a, int index);*/
+

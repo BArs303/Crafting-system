@@ -1,0 +1,30 @@
+CC = clang
+CFLAGS = -std=c99
+
+HEADERS_DIRS = headers ../Advanced_types/headers
+LIB_DIR = lib
+SRC_DIR = source
+OBJ_DIR = bin
+LIB_DIR = lib
+
+TARGET_EXEC = main.elf
+
+SOURCES = $(wildcard $(SRC_DIR)/*.c)
+
+#SRC_NAMES = $(notdir $(SOURCES))
+
+OBJECTS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SOURCES))
+H_FLAGS = $(foreach DIR, $(HEADERS_DIRS), -I $(DIR))
+L_FLAGS = -L $(LIB_DIR) -l$(foreach L, $(wildcard $(LIB_DIR)/*),$(patsubst $(LIB_DIR)/lib%.a, %, $(L)))
+
+$(TARGET_EXEC):$(OBJECTS)
+	$(CC) -o $@ $^ $(L_FLAGS)
+
+test:
+	@echo $(SOURCES)
+	@echo $(OBJECTS)
+	@echo $(H_FLAGS)
+	@echo $(L_FLAGS)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) $(H_FLAGS) -c -o $@ $<

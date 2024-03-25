@@ -1,0 +1,29 @@
+{
+    "Recipes":
+	[
+        {
+            "products":
+			[
+                {
+                    "id": 57478,
+                    "quantity": 3
+                }
+            ],
+            "components":
+			[
+                {
+                    "id": 2312,
+                    "quantity": 4
+                },
+                {
+                    "id": 2463,
+                    "quantity": 4
+                },
+                {
+                    "id": 57457,
+                    "quantity": 10
+                }
+            ]
+        }
+    ]
+}
