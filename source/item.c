@@ -234,8 +234,34 @@ static void print_rcomponent(void *element)
 	return;
 }
 
+/*IO Section*/
 
-void unload_recipe(Recipe *rec, FILE *ofs)
+Item* convert_json_to_item(JSON *a)
 {
-	return;
+	Item *item = NULL;
+	int id;
+	if(a->type == type_String)
+	{
+		id = str_to_int(a->key);
+		item = create_item(id, a->value.string);
+	}
+	return item;
+}
+
+JSON* convert_item_to_json(Item *item)
+{
+	JSON *a = NULL;
+	if(item)
+	{
+		a = malloc(sizeof(JSON));
+		a->key = int_to_str(item->id);
+		a->value.string = item->name;
+		a->type = type_String;
+	}
+	return a;
+}
+
+JSON* unload_recipes(Darray *recipes)
+{
+	return NULL;
 }

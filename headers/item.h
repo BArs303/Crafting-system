@@ -41,6 +41,8 @@ Recipe* get_recipe(Item *a, int index);
 void print_item(Item *a);
 void print_recipe(Recipe *a);
 
+Item* convert_json_to_item(JSON *a);
+JSON* convert_item_to_json(Item *a);
 void unload_recipe(Recipe *recipe, FILE *ofs);
 
 /*rewrite all functions
