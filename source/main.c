@@ -1,5 +1,5 @@
+#include "advanced_types.h"
 #include "item.h"
-#include "json.h"
 
 Darray* items_creation();
 Item* find_item_by_id(Darray *items, int id);
@@ -11,10 +11,10 @@ int main()
 	Darray *items;
 	Item *a;
 	items = items_creation();
-	/*for(int i = 0; i < items->size; i++)
+	for(int i = 0; i < items->size; i++)
 	{
 		print_item(darray_at_pos(items, i));
-	}*/
+	}
 	printf("RECIPES\n");
 	load_recipes(items);
 	//need to free array of items
@@ -44,7 +44,7 @@ void load_recipes(Darray *items)
 {
 	JSON *inp, *json_recipes,  *json_recipe, *json_products, *json_components, *json_rcomponent, *json_id, *json_quantity;
 	List *jrecipes, *jproducts, *jcomponents;
-	inp = json_parse_file("recipes.txt");
+	inp = json_parse_file("recipes.json");
 	if(inp->type == type_Object)
 	{
 		/*json_Object equals List*/
@@ -55,8 +55,8 @@ void load_recipes(Darray *items)
 			json_recipe = list_at_pos(jrecipes, i);
 			if(json_recipe->type == type_Object)
 			{
-				json_products = list_at_pos(json_recipe->value.object, 0);
-				json_components = list_at_pos(json_recipe->value.object, 1);
+				json_products = list_at_pos(json_recipe->value.object, 1);
+				json_components = list_at_pos(json_recipe->value.object, 0);
 				if(strcmp(json_products->key, "products") == 0 && strcmp(json_components->key, "components") == 0)
 				{
 					jproducts = json_products->value.list;
@@ -67,8 +67,8 @@ void load_recipes(Darray *items)
 						json_rcomponent = list_at_pos(jproducts, j);
 						if(json_rcomponent->type == type_Object)
 						{
-							json_id = list_at_pos(json_rcomponent->value.object, 0);
-							json_quantity = list_at_pos(json_rcomponent->value.object, 1);
+							json_id = list_at_pos(json_rcomponent->value.object, 1);
+							json_quantity = list_at_pos(json_rcomponent->value.object, 0);
 							if(strcmp(json_id->key, "id") == 0 && strcmp(json_quantity->key, "quantity") == 0)
 							{
 								printf("id: %d\nquantity: %d\n", json_id->value.number, json_quantity->value.number);
@@ -85,8 +85,8 @@ void load_recipes(Darray *items)
 						json_rcomponent = list_at_pos(jcomponents, j);
 						if(json_rcomponent->type == type_Object)
 						{
-							json_id = list_at_pos(json_rcomponent->value.object, 0);
-							json_quantity = list_at_pos(json_rcomponent->value.object, 1);
+							json_id = list_at_pos(json_rcomponent->value.object, 1);
+							json_quantity = list_at_pos(json_rcomponent->value.object, 0);
 							if(strcmp(json_id->key, "id") == 0 && strcmp(json_quantity->key, "quantity") == 0)
 							{
 								printf("id: %d\nquantity: %d\n", json_id->value.number, json_quantity->value.number);

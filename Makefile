@@ -28,3 +28,6 @@ test:
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) $(H_FLAGS) -c -o $@ $<
+
+clean:
+	rm bin/*.o
