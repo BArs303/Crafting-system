@@ -13,6 +13,7 @@ static void passive_destruct(void *element);
 static int find_index_by_id(Set *products, int id);
 static int get_recipe_index(Item *a, Recipe *r);
 
+static int id_comparison(void *arg1, void *arg2);
 
 Item *create_item(int id, char *name)
 {
@@ -198,6 +199,14 @@ static int find_index_by_id(Set *products, int id)
 	return -1;
 }
 
+bool item_set_insert(Set* a, Item *element)
+{
+    return s_set_insert(a, element, &id_comparison);
+}
+static int id_comparison(void *arg1, void *arg2)
+{
+    return (((Item*)arg1)->id) - (((Item*)arg2)->id);
+}
 void print_item(Item *a)
 {
 	printf("Items name %s\n"
@@ -227,10 +236,45 @@ Recipe* get_recipe(Item *a, int index)
 {
 	return darray_at_pos(a->recipes, index);
 }
+
+Set* get_components(Item *a, int index)
+{
+    Recipe *tmp = get_recipe(a, index);
+    if(tmp)
+    {
+        return tmp->components;
+    }
+    return NULL;
+}
+
+Set* get_products(Item *a, int index)
+{
+    Recipe *tmp = get_recipe(a, index);
+    if(tmp)
+    {
+        return tmp->products;
+    }
+    return NULL;
+}
 static void print_rcomponent(void *element)
 {
 	Rcomponent *tmp = element;
-	printf("%s: %d\n", tmp->item->name, tmp->quantity);
+	if(tmp)
+	{
+        if(tmp->item)
+        {
+            printf("%s: %d\n", tmp->item->name, tmp->quantity);
+        }
+        else
+        {
+            printf("\nNULL ITEM\n");
+        }
+	}
+	else
+	{
+        printf("Error: Rcomponents is equal 0");
+	}
+
 	return;
 }
 

@@ -36,7 +36,12 @@ void add_recipe_with_opts(Item *a ,int product_quantity, int num_of_components);
 void add_product(Recipe *dest, Item *src, int product_quantity);
 void add_component(Recipe *dest, Item *src, int component_quantity);
 
+
 Recipe* get_recipe(Item *a, int index);
+Set* get_components(Item *a, int recipe_index);
+Set* get_products(Item *a, int recipe_index);
+
+bool item_set_insert(Set* a, Item *element);
 
 void print_item(Item *a);
 void print_recipe(Recipe *a);
