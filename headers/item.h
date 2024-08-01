@@ -28,33 +28,25 @@ struct recipe_component
 
 
 Item* create_item(int id, char *name);
+Recipe* create_recipe();
+Rcomponent* create_rcomponent(Item *a, int q);
 
-void add_recipe(Item *a);
-void add_recipe_with_quantity(Item *a ,int product_quantity);
-void add_recipe_with_opts(Item *a ,int product_quantity, int num_of_components);
+bool add_component(Recipe *dst, Rcomponent *element);
+bool add_product(Recipe *dst, Rcomponent *element);
+void link_recipe(Recipe *a);
 
-void add_product(Recipe *dest, Item *src, int product_quantity);
-void add_component(Recipe *dest, Item *src, int component_quantity);
-
+bool rcomponent_set_insert(Set *a, Rcomponent *element);
+Rcomponent* rcomponent_find(Set *src, Rcomponent *element);
+int rcomponent_find_index(Set *src, Rcomponent *element);
 
 Recipe* get_recipe(Item *a, int index);
-Set* get_components(Item *a, int recipe_index);
 Set* get_products(Item *a, int recipe_index);
+Set* get_components(Item *a, int recipe_index);
 
-bool item_set_insert(Set* a, Item *element);
+bool item_set_insert(Set *a, Item *element);
 
 void print_item(Item *a);
 void print_recipe(Recipe *a);
 
 Item* convert_json_to_item(JSON *a);
 JSON* convert_item_to_json(Item *a);
-void unload_recipe(Recipe *recipe, FILE *ofs);
-
-/*rewrite all functions
-void destruct_item(Item *a);
-void destruct_item_and_recipe(Item *a);//do not call this func
-void remove_product_by_index(Recipe *a, int item_index);
-void remove_product_by_id(Recipe *a, int id);
-void destruct_recipe(Recipe *a);
-void remove_recipe(Item *a, int index);*/
-

@@ -8,3 +8,5 @@ test.json
 blueprints.yaml
 headers/converter.h
 source/converter.c
+items.json
+recipes.json
