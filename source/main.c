@@ -1,84 +1,80 @@
 #include "advanced_types.h"
-#include "item.h"
+#include "load.h"
 
-Darray* items_creation();
 Item* find_item_by_id(Darray *items, int id);
 Item* item_binary_search(Darray *items, int id, int start, int end);
-void load_recipes(Darray *items);
 
-Recipe* form_recipe(Set *items, JSON *products, JSON *components);
-void hfunc(Set *items,Set *dst,  JSON *materials);
 int div_up(int x, int y);
-bool check_item_existence(Set *summary, void *element);
 
-void show_tree(Item *root);
+void show_tree(Rcomponent *root);
 Rcomponent* form_scomponent(Item *a, int quantity);
 int calculate_surplus(Item *a, int quantity);
 
-void debugSummaryPrint(Set *summary);
-void debugQueuePrint(Darray *queue, int index);
+void zeroLevelPrint(void *element);
 void debugSurplusPrint(Set *surplus);
 
-void update_surplus(Darray *queue, Set *surplus, Rcomponent *component, int quantity);
+void update_surplus(Queue *queue, Set *surplus, Rcomponent *component, int quantity);
 void update_summary(Set *summary, Rcomponent *required, Rcomponent *product);
 void substract_surplus(Set *summary, Set *surplus);
-
+void tmp_print(void *element)
+{
+	print_item(element);
+}
 int main()
 {
-	Darray *items;
+	Set *items;
+	Item tmp;
+	Rcomponent *r;
 
-	items = items_creation();
+	printf("ITEMS\n");
+	items = load_items("items.json");
 	printf("RECIPES\n");
-	load_recipes(items);
+	load_recipes(items, "recipes.json");
 	printf("Loaded\n");
 
-	show_tree(find_item_by_id(items, 28710));
+	tmp.id = 57457;
+	//printf("%p\n", set_find(items, &tmp, id_comparison));
+	r = create_rcomponent(set_find(items, &tmp, id_comparison), 10);
+	//print_set(items, tmp_print);
+	show_tree(r);
 	printf("\n");
 
 	//need to free array of items
 	return 0;
 }
 
-bool check_item_existance(Set *summary, void *element)
+void show_tree(Rcomponent *root)
 {
-	for(int i = 0; i < summary->size; i++)
-	{
-		if(set_at_pos(summary, i) == element)
-			return false;
-	}
-	return true;
-}
-
-void show_tree(Item *root)
-{
-    Darray *queue;
+	Queue *queue;
+    Darray *components, *products;
     Set *summary, *surplus;
     Rcomponent *component, *product, *required;
 	Rcomponent *addable, *surplus_component, *csummary;
-	Set *components, *products;
 	int quantity;
 
-    queue = init_darray();
+    queue = init_queue();
     summary = init_set();
     surplus = init_set();
-	component = create_rcomponent(root, 1);
-	darray_append(queue, component);
+	queue_push(queue, root);
 
-    for(int i = 0; i < queue->size; i++)
+	printf("summary %p\n", summary);
+	while(!queue_is_empty(queue))
     {
-        required = darray_at_pos(queue, i);
+		printf("queue size %d\n", queue->size);
+        required = queue_pop(queue);
+		printf("required %p\n", required);
         components = get_components(required->item, 0);
         products = get_products(required->item, 0);
         if(components && products)
         {
-            product = set_at_pos(products, 0);
+            product = darray_at_pos(products, 0);
 			printf("product %s\n", product->item->name);
             for(int j = 0; j < components->size; j++)
             {
-                component = set_at_pos(components, j);
+                component = darray_at_pos(components, j);
 				printf("component %s %d\n", component->item->name, component->item->id);
 				quantity = component->quantity * div_up(required->quantity, product->quantity);
-				surplus_component = rcomponent_find(surplus, component);//??
+				//surplus_component = rcomponent_find(surplus, component);//??
 				update_surplus(queue, surplus, component, quantity);
 
 				/*printf("Queue\n");
@@ -95,17 +91,17 @@ void show_tree(Item *root)
 			update_summary(summary, required, NULL);
 		}
     }
-	substract_surplus(summary, surplus);
+	//substract_surplus(summary, surplus);
 
-	printf("Queue\n");
-	debugQueuePrint(queue, 0);
+	//printf("Queue\n");
+	//debugQueuePrint(queue, 0);
 	printf("Summary\n");
-	debugSummaryPrint(summary);
+	print_set(summary, &zeroLevelPrint);
 	printf("Surplus\n");
 	debugSurplusPrint(surplus);
 }
 
-void substract_surplus(Set *summary, Set *surplus)
+/*void substract_surplus(Set *summary, Set *surplus)//need to rework
 {
 	Rcomponent *unit, *sunit;
 	for(int i = 0; i < summary->size; i++)
@@ -118,7 +114,7 @@ void substract_surplus(Set *summary, Set *surplus)
 		}
 	}
 	return;
-}
+}*/
 
 void update_summary(Set *summary, Rcomponent *required, Rcomponent *product)
 {
@@ -133,24 +129,27 @@ void update_summary(Set *summary, Rcomponent *required, Rcomponent *product)
 		quantity = required->quantity;
 	}
 
-	csummary = rcomponent_find(summary, required);
+	csummary = set_find(summary, required, &rcomponent_comparison);
 	if(csummary)
 	{
 		csummary->quantity += quantity;
 	}
 	else
 	{
-		rcomponent_set_insert(summary, create_rcomponent(required->item, quantity));
+		set_insert(
+		summary,
+		create_rcomponent(required->item, quantity),
+		&rcomponent_comparison);
 	}
 	return;
 }
 
-void update_surplus(Darray *queue, Set *surplus, Rcomponent *component, int quantity)
+void update_surplus(Queue *queue, Set *surplus, Rcomponent *component, int quantity)
 {
 	Rcomponent *surplus_component, *addable;
 	int s;
 
-	surplus_component = rcomponent_find(surplus, component);
+	surplus_component = set_find(surplus, component, &rcomponent_comparison);
 	s = calculate_surplus(component->item, quantity);
 	//printf("%s need %d ", component->item->name, quantity);
 
@@ -168,7 +167,7 @@ void update_surplus(Darray *queue, Set *surplus, Rcomponent *component, int quan
 			surplus_component->quantity = calculate_surplus(component->item, quantity);
 			//printf("add to queue with %d\n", quantity);
 			addable = create_rcomponent(component->item, quantity);
-			darray_append(queue, addable);
+			queue_push(queue, addable);
 		}
 	}
 	else
@@ -177,63 +176,38 @@ void update_surplus(Darray *queue, Set *surplus, Rcomponent *component, int quan
 		addable = create_rcomponent(component->item, quantity);
 		if(s != 0)
 		{
-			rcomponent_set_insert(surplus, create_rcomponent(component->item, s));
+			set_insert(
+			surplus,
+			create_rcomponent(component->item, s),
+			&rcomponent_comparison);
 		}
-		darray_append(queue, addable);
+		queue_push(queue, addable);
 	}
 	return;
 }
-void debugSummaryPrint(Set *summary)
+void zeroLevelPrint(void *element)
 {
 	Rcomponent *a;
-	for(int i = 0; i < summary->size; i++)
+	a = element;
+	if(a->item->recipes->size == 0)
 	{
-		a = darray_at_pos(summary, i);
-		if(a->item->recipes->size == 0)
-		{
-			printf("%s %d\n", a->item->name, a->quantity);
-		}
+		printf("%s %d\n", a->item->name, a->quantity);
 	}
-	printf("\n");
 }
 void debugSurplusPrint(Set *surplus)
 {
-	Rcomponent *a;
-	for(int i = 0; i < surplus->size; i++)
-	{
-		a = darray_at_pos(surplus, i);
-		printf("%s %d\n", a->item->name, a->quantity);
-	}
-	printf("\n");
-}
-void debugQueuePrint(Darray *queue, int index)
-{
-	Rcomponent *a;
-	for(int i = 0; i < queue->size; i++)
-	{
-		a = darray_at_pos(queue, i);
-		if(i == index)
-		{
-			printf("id: %d %s %d<-----\n", a->item->id, a->item->name, a->quantity);
-		}
-		else
-		{
-			printf("id: %d %s %d\n", a->item->id, a->item->name, a->quantity);
-		}
-	}
-	printf("\n");
-
+	return;
 }
 
 int calculate_surplus(Item *a, int quantity)
 {
-	Set *products;
+	Darray *products;
 	Rcomponent *product;
 	int result = 0;
 	products = get_products(a, 0);
 	if(products)
 	{
-		product = set_at_pos(products, 0);
+		product = darray_at_pos(products, 0);
 		if(quantity % product->quantity != 0)
 		{
 			result = product->quantity - quantity % product->quantity;
@@ -246,131 +220,3 @@ int div_up(int x, int y)
     return (x-1)/y+1;
 }
 
-
-Set* items_creation()
-{
-	JSON *a, *field;
-	List *object;
-	Darray *items = NULL;
-	a = json_parse_file("items.json");
-	if(a)
-	{
-		object = a->value.object;
-		items = init_darray_with_length(object->size);
-		for(int i = 0; i < object->size; i++)
-		{
-			field = list_at_pos(object, i);
-			darray_append(items, convert_json_to_item(field));
-		}
-	}
-	return items;
-}
-
-void load_recipes(Darray *items)
-{
-	JSON *inp, *json_recipes,  *json_recipe, *json_products, *json_components;
-	List *jrecipes;
-	Recipe *unit;
-	inp = json_parse_file("recipes.json");
-	if(inp->type == type_Object)
-	{
-		/*json_Object equals List*/
-		json_recipes = list_at_pos(inp->value.object, 0);
-		jrecipes = json_recipes->value.list;
-		for(int i = 0; i < jrecipes->size; i++)
-		{
-			json_recipe = list_at_pos(jrecipes, i);
-			if(json_recipe->type == type_Object)
-			{
-				json_products = list_at_pos(json_recipe->value.object, 1);
-				json_components = list_at_pos(json_recipe->value.object, 0);
-				if(!json_products || !json_components)
-				{
-					printf("error\n");
-					continue;
-				}
-				if(strcmp(json_products->key, "products") == 0 && strcmp(json_components->key, "components") == 0 )
-				{
-					unit = form_recipe(items, json_products, json_components);
-					link_recipe(unit);
-				}
-				else
-				{
-					printf("name error\n");
-				}
-			}
-		}
-	}
-}
-
-Recipe* form_recipe(Set *items, JSON *products, JSON *components)
-{
-	Recipe *ret = create_recipe();
-	hfunc(items, ret->products, products);
-	hfunc(items, ret->components, components);
-	return ret;
-}
-
-void hfunc(Set *items, Set *dst, JSON *materials)
-{
-    Rcomponent *unit;
-	Item *find_result;
-    JSON *json_rcomponent, *json_id, *json_quantity;
-    List *materials_list;
-
-    materials_list = materials->value.list;
-    for(int j = 0; j < materials_list->size; j++)
-    {
-        json_rcomponent = list_at_pos(materials_list, j);
-        if(json_rcomponent->type == type_Object)
-        {
-            json_id = list_at_pos(json_rcomponent->value.object, 1);
-            json_quantity = list_at_pos(json_rcomponent->value.object, 0);
-            if(strcmp(json_id->key, "id") == 0 && strcmp(json_quantity->key, "quantity") == 0)
-            {
-				find_result = find_item_by_id(items, json_id->value.number);
-				if(find_result)
-				{
-					unit = create_rcomponent(find_result, json_quantity->value.number);
-					set_insert(dst, unit);
-				}
-				else
-				{
-					continue;
-				}
-            }
-            else
-            {
-                printf("rcomponent name error\n");
-            }
-        }
-    }
-}
-Item* find_item_by_id(Darray *items, int id)
-{
-	return item_binary_search(items, id, 0, items->size-1);
-}
-
-Item* item_binary_search(Darray *items, int id, int start, int end)
-{
-	Item *mitem;
-	int middle;
-	while(start <= end)
-	{
-		middle = (start+end)/2;
-		mitem = darray_at_pos(items, middle);
-		if(mitem->id == id)
-		{
-			return mitem;
-		}
-		else if(mitem->id < id)
-		{
-			start = middle + 1;
-		}
-		else
-		{
-			end = middle - 1;
-		}
-	}
-	return NULL;
-}

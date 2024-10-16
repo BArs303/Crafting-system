@@ -10,14 +10,14 @@ struct item
 {
 	int id;
 	char *name;
-	Set *used_in; //list of recipes
+	Darray *used_in; //list of recipes
 	Darray *recipes;
 };
 
 struct recipe
 {
-	Set *products;
-	Set *components;
+	Darray *products;//list??
+	Darray *components;
 };
 
 struct recipe_component
@@ -35,18 +35,19 @@ bool add_component(Recipe *dst, Rcomponent *element);
 bool add_product(Recipe *dst, Rcomponent *element);
 void link_recipe(Recipe *a);
 
-bool rcomponent_set_insert(Set *a, Rcomponent *element);
-Rcomponent* rcomponent_find(Set *src, Rcomponent *element);
-int rcomponent_find_index(Set *src, Rcomponent *element);
-
 Recipe* get_recipe(Item *a, int index);
-Set* get_products(Item *a, int recipe_index);
-Set* get_components(Item *a, int recipe_index);
+Darray* get_products(Item *a, int recipe_index);
+Darray* get_components(Item *a, int recipe_index);
 
-bool item_set_insert(Set *a, Item *element);
+int id_comparison(void *a, void *b);
+int rcomponent_comparison(void *a, void *b);
+
 
 void print_item(Item *a);
 void print_recipe(Recipe *a);
 
 Item* convert_json_to_item(JSON *a);
 JSON* convert_item_to_json(Item *a);
+Rcomponent* convert_json_to_rc(Set *items, JSON *a);
+Darray* convert_json_to_rca(Set *items, JSON *a);
+Recipe* convert_json_to_recipe(Set *items, JSON *a);
