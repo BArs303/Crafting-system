@@ -1,12 +1,7 @@
-bin
-lib
-command.txt
+bin/*.o
 output.txt
 old/
+lib/
 main.elf
-test.json
-blueprints.yaml
-headers/converter.h
-source/converter.c
 items.json
 recipes.json

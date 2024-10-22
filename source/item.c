@@ -8,7 +8,6 @@ static void passive_destruct(void *element);
 
 static int rcomponent_sort(void *arg1, void *arg2);
 
-
 Item *create_item(int id, char *name)
 {
 	Item *newi;
@@ -70,8 +69,8 @@ int id_comparison(void *arg1, void *arg2)
 
 void destruct_item(Item *a)
 {
-	destruct_darray(a->recipes, &passive_destruct);
-	destruct_darray(a->used_in, &passive_destruct);
+	delete_darray(a->recipes, &passive_destruct);
+	delete_darray(a->used_in, &passive_destruct);
 	free(a->name);
 	free(a);
 	return;
@@ -199,6 +198,8 @@ Rcomponent* convert_json_to_rc(Set *items, JSON *a)
 			{
 				printf("Rcomponent convert error: item with such id does't exists\n");
 			}
+			free(json_id);
+			free(json_quantity);
 		}
 		else
 		{
@@ -256,6 +257,10 @@ Recipe* convert_json_to_recipe(Set *items, JSON *a)
 	return NULL;//ret??
 }
 
+/*static void debug_json_errors(JSON *a)
+{
+	printf("%s\n", json_stringify(a));
+}*/
 /*JSON* unload_recipes(Darray *recipes)
 {
 	return NULL;

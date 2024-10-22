@@ -15,6 +15,7 @@ Set* load_items(const char *fname)
 			field = list_at_pos(object, i);
 			set_insert(items, convert_json_to_item(field), &id_comparison);
 		}
+		//free json
 	}
 	return items;
 }
