@@ -13,8 +13,12 @@ Item *create_item(int id, char *name)
 	Item *newi;
 	newi = malloc(sizeof(Item));
 	//need allocation check
-	newi->id = id;
-	newi->name = name;
+
+	newi->data = malloc(sizeof(IData));
+	newi->data->id = id;
+	newi->data->name = name;
+	newi->data->price = 0;
+
 	newi->recipes = init_darray();
 	newi->used_in = init_darray();
 	return newi;
@@ -50,6 +54,14 @@ void link_recipe(Recipe *a)
 			darray_append(tmp->item->recipes, a);
 		}
 	}
+	for(int i = 0; i < a->components->size; i++)
+	{
+		tmp = darray_at_pos(a->components, i);
+		if(tmp->item)
+		{
+			darray_append(tmp->item->used_in, a);
+		}
+	}
 	return;
 }
 
@@ -57,22 +69,27 @@ int rcomponent_comparison(void *arg1, void *arg2)
 {
 	return id_comparison
 	(
-	CAST(Rcomponent*, arg1)->item, 
-	CAST(Rcomponent*, arg2)->item 
+		CAST(Rcomponent*, arg1)->item, 
+		CAST(Rcomponent*, arg2)->item 
 	);
 }
 
 int id_comparison(void *arg1, void *arg2)
 {
-	return (((Item*)arg1)->id) - (((Item*)arg2)->id);
+	return (((Item*)arg1)->data->id) - (((Item*)arg2)->data->id);
 }
 
-void destruct_item(Item *a)
+void delete_item(void *item)
 {
-	delete_darray(a->recipes, &passive_destruct);
-	delete_darray(a->used_in, &passive_destruct);
-	free(a->name);
+	Item *a;
+	a = item;
+	//if no recipe and never used
+	free(a->data->name);
+	free(a->data);
 	free(a);
+	//delete_darray(a->recipes, &passive_destruct);
+	//delete_darray(a->used_in, &passive_destruct);
+	//printf("Error: Can't delete the item that is used\n");
 	return;
 }
 void passive_destruct(void *element)
@@ -82,8 +99,8 @@ void passive_destruct(void *element)
 void print_item(Item *a)
 {
 	printf("Items name %s\n"
-		"Item id: %d\nUsed in:\n", a->name, a->id);
-	print_darray(a->used_in, &inner_print_recipe);//type change
+		"Item id: %d\nUsed in %d recipes\n", a->data->name, a->data->id, a->used_in->size);
+	//print_darray(a->used_in, &inner_print_recipe);//type change
 	printf("Can be crafted:\n");
 	print_darray(a->recipes, &inner_print_recipe);
 	printf("----end of item----\n");
@@ -135,7 +152,7 @@ static void print_rcomponent(void *element)
 	{
         if(tmp->item)
         {
-            printf("%s: %d\n", tmp->item->name, tmp->quantity);
+            printf("%s: %d\n", tmp->item->data->name, tmp->quantity);
         }
         else
         {
@@ -170,8 +187,8 @@ JSON* convert_item_to_json(Item *item)
 	if(item)
 	{
 		a = malloc(sizeof(JSON));
-		a->key = int_to_str(item->id);
-		a->value.string = item->name;
+		a->key = int_to_str(item->data->id);
+		a->value.string = item->data->name;
 		a->type = type_String;
 	}
 	return a;
@@ -188,7 +205,7 @@ Rcomponent* convert_json_to_rc(Set *items, JSON *a)
 		json_quantity = list_at_pos(a->value.object, 0);
 		if(strcmp(json_id->key, "id") == 0 && strcmp(json_quantity->key, "quantity") == 0)//useless with hashtable
 		{
-			f.id = json_id->value.number;
+			f.data->id = json_id->value.number;
 			ptr = set_find(items, &f, &id_comparison);
 			if(ptr)
 			{

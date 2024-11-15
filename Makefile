@@ -1,7 +1,7 @@
 CC = clang
-CFLAGS = -std=c99
+CFLAGS = -std=c99 -g
 
-HEADERS_DIRS = headers ../Advanced_types/headers
+HEADERS_DIRS = headers ../Advanced-types/headers
 LIB_DIR = lib
 SRC_DIR = source
 OBJ_DIR = bin

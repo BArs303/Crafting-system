@@ -1,19 +1,16 @@
 #include "advanced_types.h"
 #include "load.h"
 
-Item* find_item_by_id(Darray *items, int id);
-Item* item_binary_search(Darray *items, int id, int start, int end);
 
 int div_up(int x, int y);
 
 void show_tree(Rcomponent *root);
-Rcomponent* form_scomponent(Item *a, int quantity);
 int calculate_surplus(Item *a, int quantity);
 
 void zeroLevelPrint(void *element);
 void debugSurplusPrint(void *element);
 
-void update_surplus(Queue *queue, Set *surplus, Rcomponent *component, int quantity);
+void update_surplus_and_queue(Queue *queue, Set *surplus, Rcomponent *component, int quantity);
 void update_summary(Set *summary, Rcomponent *required, Rcomponent *product);
 void substract_surplus(Set *summary, Set *surplus);
 void tmp_print(void *element)
@@ -23,7 +20,7 @@ void tmp_print(void *element)
 int main()
 {
 	Set *items;
-	Item tmp;
+	Item *tmp, *b;
 	Rcomponent *r;
 
 	printf("ITEMS\n");
@@ -32,9 +29,11 @@ int main()
 	load_recipes(items, "recipes.json");
 	printf("Loaded\n");
 
-	tmp.id = 11993;
+	//delete_unused(items);
+	tmp = create_item(4246, NULL);
+	
 	//printf("%p\n", set_find(items, &tmp, id_comparison));
-	r = create_rcomponent(set_find(items, &tmp, id_comparison), 1);
+	r = create_rcomponent(set_find(items, tmp, id_comparison), 1);
 	//print_set(items, tmp_print);
 	show_tree(r);
 	printf("\n");
@@ -55,7 +54,7 @@ void show_tree(Rcomponent *root)
     queue = init_queue();
     summary = init_set();
     surplus = init_set();
-	queue_push(queue, root);
+	update_surplus_and_queue(queue, surplus, root, root->quantity);
 
 	while(!queue_is_empty(queue))
     {
@@ -67,17 +66,17 @@ void show_tree(Rcomponent *root)
         if(components && products)
         {
             product = darray_at_pos(products, 0);
-			printf("product %s %d\n", product->item->name, product->quantity);
+			//printf("product %s %d\n", product->item->data->name, product->quantity);
             for(int j = 0; j < components->size; j++)
             {
                 component = darray_at_pos(components, j);
-				printf("component %s %d\n", component->item->name, component->quantity);
+				//printf("component %s %d\n", component->item->data->name, component->quantity);
 				quantity = component->quantity * div_up(required->quantity, product->quantity);
 				//surplus_component = rcomponent_find(surplus, component);//??
-				update_surplus(queue, surplus, component, quantity);
+				update_surplus_and_queue(queue, surplus, component, quantity);
 
             }
-			printf("\n");
+			//printf("\n");
 			update_summary(summary, required, product);
         }
 		else
@@ -137,7 +136,7 @@ void update_summary(Set *summary, Rcomponent *required, Rcomponent *product)
 	return;
 }
 
-void update_surplus(Queue *queue, Set *surplus, Rcomponent *component, int quantity)
+void update_surplus_and_queue(Queue *queue, Set *surplus, Rcomponent *component, int quantity)
 {
 	Rcomponent *surplus_component, *addable;
 	int s;
@@ -182,7 +181,7 @@ void zeroLevelPrint(void *element)
 {
 	Rcomponent *a;
 	a = element;
-	printf("%s %d\n", a->item->name, a->quantity);
+	printf("%s %d\n", a->item->data->name, a->quantity);
 	/*if(a->item->recipes->size == 0)
 	{
 		printf("%s %d\n", a->item->name, a->quantity);
@@ -193,7 +192,7 @@ void debugSurplusPrint(void *b)
 	Rcomponent *a;
 	a = b;
 	if(a->quantity > 0)
-		printf("%s %d\n", a->item->name, a->quantity);
+		printf("%s %d\n", a->item->data->name, a->quantity);
 	return;
 }
 
