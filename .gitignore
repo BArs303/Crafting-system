@@ -2,6 +2,8 @@ bin/*.o
 output.txt
 old/
 lib/
-main.elf
+Crafting-system
 items.json
 recipes.json
+build/*
+!build/.gitignore
