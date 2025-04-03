@@ -13,7 +13,6 @@ struct item_data
 {
 	char *name;
 	unsigned long price;
-	int id;
 };
 
 struct recipe_data
@@ -23,15 +22,16 @@ struct recipe_data
 
 struct item
 {
+	int id;
 	IData *data;
-	Darray *used_in; //list of recipes
+	Darray *used_in; /*list of recipes*/
 	Darray *recipes;
 };
 
 struct recipe
 {
 	RData *data;
-	Darray *products;//list??
+	Darray *products;/*list??*/
 	Darray *components;
 };
 
@@ -47,6 +47,7 @@ Recipe* create_recipe();
 Rcomponent* create_rcomponent(Item *a, int q);
 
 void delete_item(void *item);
+void delete_recipe(void *recipe);
 
 bool add_component(Recipe *dst, Rcomponent *element);
 bool add_product(Recipe *dst, Rcomponent *element);
@@ -60,7 +61,7 @@ int id_comparison(void *a, void *b);
 int rcomponent_comparison(void *a, void *b);
 
 
-void print_item(Item *a);
+void print_item(void *a);
 void print_recipe(Recipe *a);
 
 Item* convert_json_to_item(JSON *a);

@@ -9,6 +9,7 @@ int calculate_surplus(Item *a, int quantity);
 
 void zeroLevelPrint(void *element);
 void debugSurplusPrint(void *element);
+void clear_summary(void *element);
 
 void update_surplus_and_queue(Queue *queue, Set *surplus, Rcomponent *component, int quantity);
 void update_summary(Set *summary, Rcomponent *required, Rcomponent *product);
@@ -20,9 +21,10 @@ void tmp_print(void *element)
 int main()
 {
 	Set *items;
-	Item *tmp, *b;
+	Item *tmp;
 	Rcomponent *r;
 
+	/*test_request();*/
 	printf("ITEMS\n");
 	items = load_items("items.json");
 	printf("RECIPES\n");
@@ -37,8 +39,9 @@ int main()
 	//print_set(items, tmp_print);
 	show_tree(r);
 	printf("\n");
+	delete_set(items, delete_item);
 
-	//need to free array of items
+	//need to free array of items*/
 	return 0;
 }
 
@@ -48,7 +51,6 @@ void show_tree(Rcomponent *root)
     Darray *components, *products;
     Set *summary, *surplus;
     Rcomponent *component, *product, *required;
-	Rcomponent *addable, *surplus_component, *csummary;
 	int quantity;
 
     queue = init_queue();
@@ -58,25 +60,25 @@ void show_tree(Rcomponent *root)
 
 	while(!queue_is_empty(queue))
     {
-		//printf("queue size %d\n", queue->size);
+		/*printf("queue size %d\n", queue->size);*/
         required = queue_pop(queue);
-		//printf("required %p\n", required);
+		/*printf("required %p\n", required);*/
         components = get_components(required->item, 0);
         products = get_products(required->item, 0);
         if(components && products)
         {
             product = darray_at_pos(products, 0);
-			//printf("product %s %d\n", product->item->data->name, product->quantity);
+			/*printf("product %s %d\n", product->item->data->name, product->quantity);*/
             for(int j = 0; j < components->size; j++)
             {
                 component = darray_at_pos(components, j);
-				//printf("component %s %d\n", component->item->data->name, component->quantity);
+				/*printf("component %s %d\n", component->item->data->name, component->quantity);*/
 				quantity = component->quantity * div_up(required->quantity, product->quantity);
-				//surplus_component = rcomponent_find(surplus, component);//??
+				/*surplus_component = rcomponent_find(surplus, component);//??*/
 				update_surplus_and_queue(queue, surplus, component, quantity);
 
             }
-			//printf("\n");
+			/*printf("\n");*/
 			update_summary(summary, required, product);
         }
 		else
@@ -86,15 +88,22 @@ void show_tree(Rcomponent *root)
     }
 	substract_surplus(summary, surplus);
 
-	//printf("Queue\n");
-	//debugQueuePrint(queue, 0);
+	/*printf("Queue\n");*/
+	/*debugQueuePrint(queue, 0);*/
 	printf("Summary\n");
 	print_set(summary, &zeroLevelPrint);
 	printf("Surplus\n");
 	print_set(surplus, &debugSurplusPrint);
+	delete_set(summary, clear_summary);
 }
 
-void substract_surplus(Set *summary, Set *surplus)//need to rework
+void clear_summary(void *element)
+{
+	free(element);
+}
+
+
+void substract_surplus(Set *summary, Set *surplus)/*need to rework*/
 {
 	Rcomponent *unit, *sunit;
 	List *surplus_list;
@@ -143,28 +152,28 @@ void update_surplus_and_queue(Queue *queue, Set *surplus, Rcomponent *component,
 
 	surplus_component = set_find(surplus, component, &rcomponent_comparison);
 	s = calculate_surplus(component->item, quantity);
-	//printf("%s need %d ", component->item->name, quantity);
+	/*printf("%s need %d ", component->item->name, quantity);*/
 
 	if(surplus_component)
 	{
-		//printf("already exists with quantity %d ", surplus_component->quantity);
+		/*printf("already exists with quantity %d ", surplus_component->quantity);*/
 		if(surplus_component->quantity > quantity)
 		{
-			//printf("do not add\n");
+			/*printf("do not add\n");*/
 			surplus_component->quantity -= quantity;
 		}
 		else
 		{
 			quantity -= surplus_component->quantity;
 			surplus_component->quantity = calculate_surplus(component->item, quantity);
-			//printf("add to queue with %d\n", quantity);
+			/*printf("add to queue with %d\n", quantity);*/
 			addable = create_rcomponent(component->item, quantity);
 			queue_push(queue, addable);
 		}
 	}
 	else
 	{
-		//printf("just adding\n");
+		/*printf("just adding\n");*/
 		addable = create_rcomponent(component->item, quantity);
 		if(s != 0)
 		{

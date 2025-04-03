@@ -1,21 +1,19 @@
 #include "item.h"
 
-
 static void print_rcomponent(void *element);
 static void inner_print_recipe(void *a);
 
-static void passive_destruct(void *element);
-
 static int rcomponent_sort(void *arg1, void *arg2);
+static void delete_rcomponent(void *rcomponent);
 
 Item *create_item(int id, char *name)
 {
 	Item *newi;
 	newi = malloc(sizeof(Item));
-	//need allocation check
+	newi->id = id;
+	/*need allocation check*/
 
 	newi->data = malloc(sizeof(IData));
-	newi->data->id = id;
 	newi->data->name = name;
 	newi->data->price = 0;
 
@@ -76,30 +74,68 @@ int rcomponent_comparison(void *arg1, void *arg2)
 
 int id_comparison(void *arg1, void *arg2)
 {
-	return (((Item*)arg1)->data->id) - (((Item*)arg2)->data->id);
+	return (((Item*)arg1)->id) - (((Item*)arg2)->id);
 }
 
 void delete_item(void *item)
 {
 	Item *a;
+	Recipe *recipe;
+	Darray *products;
+	int i;
 	a = item;
 	//if no recipe and never used
-	free(a->data->name);
-	free(a->data);
+	if(a)
+	{
+		//used in list doesn't fully implemented
+		delete_darray(a->used_in, passive_destruct);
+
+		/*if you want to delete an item and 
+		its recipe contains only one product,
+		the recipe must be delted
+		if the recipe contains other products,
+		the deleted item must be removed from the products list*/
+		for(i = 0; i < a->recipes->size; i++)
+		{
+			recipe = get_recipe(a, i);
+			products = recipe->products;
+			if(products->size < 2) //recipe needed only for this item or doesn't have products
+			{
+				delete_recipe(recipe);
+			}
+		}
+		delete_darray(a->recipes, passive_destruct);
+		free(a->data->name);
+		free(a->data);
+
+		free(a);
+	}
+	return;
+}
+
+void delete_recipe(void *recipe)
+{
+	Recipe *a;
+	a = recipe;
+	if(a->products)
+		delete_darray(a->products, &delete_rcomponent);
+
+	if(a->components)
+		delete_darray(a->components, &delete_rcomponent);
 	free(a);
-	//delete_darray(a->recipes, &passive_destruct);
-	//delete_darray(a->used_in, &passive_destruct);
-	//printf("Error: Can't delete the item that is used\n");
-	return;
 }
-void passive_destruct(void *element)
+
+static void delete_rcomponent(void *rcomponent)
 {
-	return;
+	free(rcomponent);
 }
-void print_item(Item *a)
+
+void print_item(void *item)
 {
+	Item *a;
+	a = item;
 	printf("Items name %s\n"
-		"Item id: %d\nUsed in %d recipes\n", a->data->name, a->data->id, a->used_in->size);
+		"Item id: %d\nUsed in %d recipes\n", a->data->name, a->id, a->used_in->size);
 	//print_darray(a->used_in, &inner_print_recipe);//type change
 	printf("Can be crafted:\n");
 	print_darray(a->recipes, &inner_print_recipe);
@@ -152,7 +188,7 @@ static void print_rcomponent(void *element)
 	{
         if(tmp->item)
         {
-            printf("%s: %d\n", tmp->item->data->name, tmp->quantity);
+            printf("%d %s: %d\n", tmp->item->id, tmp->item->data->name, tmp->quantity);
         }
         else
         {
@@ -171,8 +207,9 @@ static void print_rcomponent(void *element)
 
 Item* convert_json_to_item(JSON *a)
 {
-	Item *item = NULL;
+	Item *item;
 	int id;
+	item = NULL;
 	if(a->type == type_String)
 	{
 		id = str_to_int(a->key);
@@ -187,7 +224,7 @@ JSON* convert_item_to_json(Item *item)
 	if(item)
 	{
 		a = malloc(sizeof(JSON));
-		a->key = int_to_str(item->data->id);
+		a->key = int_to_str(item->id);
 		a->value.string = item->data->name;
 		a->type = type_String;
 	}
@@ -205,7 +242,7 @@ Rcomponent* convert_json_to_rc(Set *items, JSON *a)
 		json_quantity = list_at_pos(a->value.object, 0);
 		if(strcmp(json_id->key, "id") == 0 && strcmp(json_quantity->key, "quantity") == 0)//useless with hashtable
 		{
-			f.data->id = json_id->value.number;
+			f.id = json_id->value.number;
 			ptr = set_find(items, &f, &id_comparison);
 			if(ptr)
 			{
@@ -215,8 +252,6 @@ Rcomponent* convert_json_to_rc(Set *items, JSON *a)
 			{
 				printf("Rcomponent convert error: item with such id does't exists\n");
 			}
-			free(json_id);
-			free(json_quantity);
 		}
 		else
 		{
@@ -245,12 +280,10 @@ Darray* convert_json_to_rca(Set *items, JSON *a) //rca - recipe component array
 	}
 	return ret;
 }
-
 Recipe* convert_json_to_recipe(Set *items, JSON *a)
 {
 	Recipe *ret;
 	JSON *json_products, *json_components;
-	ret = create_recipe();
 	if(a && a->type == type_Object)
 	{
 		json_components = list_at_pos(a->value.object, 0);//hashtable
@@ -260,10 +293,16 @@ Recipe* convert_json_to_recipe(Set *items, JSON *a)
 			printf("Recipe convert error: missing field\n");
 			return NULL;
 		}
-		if(strcmp(json_products->key, "products") == 0 &&strcmp(json_components->key, "components") == 0)//hashtable required
+		if(strcmp(json_products->key, "products") == 0 && strcmp(json_components->key, "components") == 0)//hashtable required
 		{
+			ret = create_recipe();
 			ret->products = convert_json_to_rca(items, json_products);
 			ret->components = convert_json_to_rca(items, json_components);
+			if(ret->products->size == 0 || ret->components->size == 0)
+			{
+				delete_recipe(ret);
+				return NULL;
+			}
 			return ret;
 		}
 		else

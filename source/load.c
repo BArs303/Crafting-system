@@ -1,5 +1,7 @@
 #include "load.h"
 
+static void soft_delete_json(void *element);
+
 Set* load_items(const char *fname)
 {
 	JSON *a, *field;
@@ -15,9 +17,21 @@ Set* load_items(const char *fname)
 			field = list_at_pos(object, i);
 			set_insert(items, convert_json_to_item(field), &id_comparison);
 		}
-		//free json
+		delete_list(object, soft_delete_json);
+		free(a);
 	}
 	return items;
+}
+
+static void soft_delete_json(void *element)
+{
+	JSON *a;
+	a = element;
+	if(a)
+	{
+		free(a->key);
+		free(element);
+	}
 }
 
 void load_recipes(Set *items, const char *fname)
@@ -38,6 +52,7 @@ void load_recipes(Set *items, const char *fname)
 			if(t)
 				link_recipe(t);
 		}
+		delete_json(a);
 	}
 	return;
 }
