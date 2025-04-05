@@ -1,7 +1,6 @@
 #include "advanced_types.h"
 #include "load.h"
 
-
 int div_up(int x, int y);
 
 void show_tree(Rcomponent *root);
@@ -18,6 +17,7 @@ void tmp_print(void *element)
 {
 	print_item(element);
 }
+
 int main()
 {
 	Set *items;
@@ -25,11 +25,13 @@ int main()
 	Rcomponent *r;
 
 	/*test_request();*/
-	printf("ITEMS\n");
+	items = general_load();
+
+	/*printf("ITEMS\n");
 	items = load_items("items.json");
 	printf("RECIPES\n");
 	load_recipes(items, "recipes.json");
-	printf("Loaded\n");
+	printf("Loaded\n");*/
 
 	//delete_unused(items);
 	tmp = create_item(4246, NULL);

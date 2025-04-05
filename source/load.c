@@ -1,8 +1,35 @@
 #include "load.h"
 
 static void soft_delete_json(void *element);
+static void process_recipes(JSON *recipes, Set *items);
+static void* load_items(void *fname);
+static void* load_recipes(void *fname);
 
-Set* load_items(const char *fname)
+Set* general_load()
+{
+	Set *items;
+	JSON *recipes;
+	pthread_t *tid;
+
+	items = NULL;
+	tid = malloc(sizeof(pthread_t) * 2);
+
+	pthread_create(&tid[0], NULL, load_items, "items.json");
+	pthread_create(&tid[1], NULL, load_recipes, "recipes.json");
+
+	pthread_join(tid[0], (void**)&items);
+	pthread_join(tid[1], (void**)&recipes);
+
+	process_recipes(recipes, items);
+
+	return items;
+}
+static void* load_recipes(void *fname)
+{
+	return json_parse_file(fname);
+}
+
+static void* load_items(void *fname)
 {
 	JSON *a, *field;
 	List *object;
@@ -29,21 +56,23 @@ static void soft_delete_json(void *element)
 	a = element;
 	if(a)
 	{
-		free(a->key);
-		free(element);
+		if(a->type == type_String)
+		{
+			free(a->key);
+			free(element);
+		}
 	}
 }
 
-void load_recipes(Set *items, const char *fname)
+static void process_recipes(JSON *recipes, Set *items)
 {
-	JSON *a, *json_recipes, *json_recipe;
 	List *jrecipes;
+	JSON *json_recipes, *json_recipe;
 	Recipe *t;
-	a = json_parse_file(fname);
-	if(a && a->type == type_Object)
+	if(recipes && recipes->type == type_Object)
 	{
 		/*json object equals List. Replace to hashtable required*/
-		json_recipes = list_at_pos(a->value.object, 0);//first field of a is list of recipes
+		json_recipes = list_at_pos(recipes->value.object, 0);//first field of a is list of recipes
 		jrecipes = json_recipes->value.list;
 		for(int i = 0; i < jrecipes->size; i++)
 		{
@@ -52,7 +81,6 @@ void load_recipes(Set *items, const char *fname)
 			if(t)
 				link_recipe(t);
 		}
-		delete_json(a);
+		delete_json(recipes);
 	}
-	return;
 }
