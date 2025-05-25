@@ -1,5 +1,7 @@
 #include "advanced_types.h"
 
+#ifndef ITEMS_H
+#define ITEMS_H
 #define DEFAULT_PRODUCT_QUANTITY 1
 
 typedef struct item_data IData;
@@ -70,3 +72,4 @@ JSON* convert_item_to_json(Item *a);
 Rcomponent* convert_json_to_rc(Set *items, JSON *a);
 Darray* convert_json_to_rca(Set *items, JSON *a);
 Recipe* convert_json_to_recipe(Set *items, JSON *a);
+#endif

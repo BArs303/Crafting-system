@@ -3,7 +3,6 @@
 static void print_rcomponent(void *element);
 static void inner_print_recipe(void *a);
 
-static int rcomponent_sort(void *arg1, void *arg2);
 static void delete_rcomponent(void *rcomponent);
 
 Item *create_item(int id, char *name)
