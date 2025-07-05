@@ -4,9 +4,9 @@ int div_up(int x, int y);
 
 static int calculate_surplus(Item *a, int quantity);
 
-static void zeroLevelPrint(void *element);
-static void debugSurplusPrint(void *element);
-static void clear_summary(void *element);
+static void zeroLevelPrint(void *element, void *params);
+static void debugSurplusPrint(void *element, void *params);
+static void clear_summary(void *element, void *params);
 
 static void update_surplus_and_queue(Queue *queue, Set *surplus, Rcomponent *component, int quantity);
 static void update_summary(Set *summary, Rcomponent *required, Rcomponent *product);
@@ -58,27 +58,28 @@ Set* show_tree(Rcomponent *root)
 	/*printf("Queue\n");*/
 	/*debugQueuePrint(queue, 0);*/
 	printf("Summary\n");
-	print_set(summary, &zeroLevelPrint);
+	print_set(summary, &zeroLevelPrint, NULL);
 	printf("Surplus\n");
-	print_set(surplus, &debugSurplusPrint);
-	delete_set(summary, clear_summary);
+	print_set(surplus, &debugSurplusPrint, NULL);
+	delete_set(summary, clear_summary, NULL);
+	delete_set(surplus, clear_summary, NULL);
 	return summary;
 }
 
-void clear_summary(void *element)
+void clear_summary(void *element, void *params)
 {
 	free(element);
 }
 
 
-void substract_surplus(Set *summary, Set *surplus)/*need to rework*/
+void substract_surplus(Set *summary, Set *surplus)
 {
 	Rcomponent *unit, *sunit;
-	List *surplus_list;
-	surplus_list = set_to_list(surplus);
-	for(int i = 0; i < surplus_list->size; i++)
+	SetIterator *surplus_iterator;
+	surplus_iterator = init_set_iterator(surplus);
+	while(si_has_next(surplus_iterator))
 	{
-		unit = list_at_pos(surplus_list, i);
+		unit = si_next(surplus_iterator);
 		sunit = set_find(summary, unit, &rcomponent_comparison);
 		sunit->quantity -= unit->quantity;
 	}
@@ -154,17 +155,17 @@ void update_surplus_and_queue(Queue *queue, Set *surplus, Rcomponent *component,
 	}
 	return;
 }
-void zeroLevelPrint(void *element)
+void zeroLevelPrint(void *element, void *params)
 {
 	Rcomponent *a;
 	a = element;
-	/*printf("%s %d\n", a->item->data->name, a->quantity);*/
-	if(a->item->recipes->size == 0)
+	printf("%s %d\n", a->item->data->name, a->quantity);
+	/*if(a->item->recipes->size == 0)
 	{
 		printf("%s %d\n", a->item->data->name, a->quantity);
-	}
+	}*/
 }
-void debugSurplusPrint(void *b)
+void debugSurplusPrint(void *b, void *params)
 {
 	Rcomponent *a;
 	a = b;

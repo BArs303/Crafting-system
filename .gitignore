@@ -7,3 +7,5 @@ items.json
 recipes.json
 build/*
 !build/.gitignore
+recipes.json
+items.json

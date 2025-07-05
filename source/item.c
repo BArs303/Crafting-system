@@ -1,62 +1,127 @@
 #include "item.h"
 
-static void print_rcomponent(void *element);
-static void inner_print_recipe(void *a);
+static void print_rcomponent(void *element, void *params);
+static void inner_print_recipe(void *a, void *params);
 
-static void delete_rcomponent(void *rcomponent);
+static IData* create_idata(char *name, float price);
+static void delete_idata(IData *data);
+
+static RData* create_rdata();
+static void delete_rdata(RData *data);
 
 Item *create_item(int id, char *name)
 {
-	Item *newi;
-	newi = malloc(sizeof(Item));
-	newi->id = id;
+	Item *ret;
+	ret = malloc(sizeof(Item));
+	ret->id = id;
 	/*need allocation check*/
 
-	newi->data = malloc(sizeof(IData));
-	newi->data->name = name;
-	newi->data->price = 0;
+	ret->data = create_idata(name, 0);
+	ret->recipes = init_darray();
+	ret->used_in = init_darray();
+	return ret;
+}
 
-	newi->recipes = init_darray();
-	newi->used_in = init_darray();
-	return newi;
+static IData* create_idata(char *name, float price)
+{
+	IData *ret;
+	ret = malloc(sizeof(IData));
+
+	ret->name = name;
+	ret->price = price;
+	return ret;
+}
+
+static void delete_idata(IData *data)
+{
+	if(data)
+	{
+		free(data->name);
+		free(data);
+	}
+}
+
+void delete_item(void *i, void *params)
+{
+	Item* item;
+	item = i;
+	if(item)
+	{
+		delete_idata(item->data);
+		free(item);
+	}
 }
 
 Recipe *create_recipe()
 {
 	Recipe *newr;
 	newr = malloc(sizeof(Recipe));
+	newr->data = create_rdata();
 	//need allocation check
+
 	newr->products = NULL;
 	newr->components = NULL;
 	return newr;
 }
 
-Rcomponent* create_rcomponent(Item *a, int q)
+static RData* create_rdata()
+{
+	RData *ret;
+	ret = malloc(sizeof(RData));
+
+	return ret;
+}
+
+static void delete_rdata(RData *data)
+{
+	free(data);
+}
+
+void delete_recipe(void *r)
+{
+	Recipe *recipe;
+	recipe = r;
+	delete_rdata(recipe->data);
+	if(recipe->products)
+		delete_darray(recipe->products, &delete_rcomponent, NULL);
+
+	if(recipe->components)
+		delete_darray(recipe->components, &delete_rcomponent, NULL);
+	free(recipe);
+}
+
+Rcomponent* create_rcomponent(Item *item, int q)
 {
 	Rcomponent *ret;
 	ret = malloc(sizeof(Rcomponent));
-	ret->item = a;
+
+	ret->item = item;
 	ret->quantity = q;
 	return ret;
 }
 
-void link_recipe(Recipe *a)
+void delete_rcomponent(void *rcomponent, void *params)
+{
+	free(rcomponent);
+}
+
+void link_recipe(Recipe *recipe)
 {
 	Rcomponent *tmp;
-	for(int i = 0; i < a->products->size; i++)
+	for(int i = 0; i < recipe->products->size; i++)
 	{
-		tmp = darray_at_pos(a->products, i);
+		tmp = darray_at_pos(recipe->products, i);
 		if(tmp->item)
 		{
-			darray_append(tmp->item->recipes, a);
+			darray_append(tmp->item->recipes, recipe);
 		}
 	}
-	for(int i = 0; i < a->components->size; i++)
+	for(int i = 0; i < recipe->components->size; i++)
 	{
-		tmp = darray_at_pos(a->components, i);
+		tmp = darray_at_pos(recipe->components, i);
 		if(tmp->item)
 		{
-			darray_append(tmp->item->used_in, a);
+			darray_append(tmp->item->used_in, recipe);
 		}
 	}
 	return;
@@ -76,59 +141,6 @@ int id_comparison(void *arg1, void *arg2)
 	return (((Item*)arg1)->id) - (((Item*)arg2)->id);
 }
 
-void delete_item(void *item)
-{
-	Item *a;
-	Recipe *recipe;
-	Darray *products;
-	int i;
-	a = item;
-	//if no recipe and never used
-	if(a)
-	{
-		//used in list doesn't fully implemented
-		delete_darray(a->used_in, passive_destruct);
-
-		/*if you want to delete an item and 
-		its recipe contains only one product,
-		the recipe must be delted
-		if the recipe contains other products,
-		the deleted item must be removed from the products list*/
-		for(i = 0; i < a->recipes->size; i++)
-		{
-			recipe = get_recipe(a, i);
-			products = recipe->products;
-			if(products->size < 2) //recipe needed only for this item or doesn't have products
-			{
-				delete_recipe(recipe);
-			}
-		}
-		delete_darray(a->recipes, passive_destruct);
-		free(a->data->name);
-		free(a->data);
-
-		free(a);
-	}
-	return;
-}
-
-void delete_recipe(void *recipe)
-{
-	Recipe *a;
-	a = recipe;
-	if(a->products)
-		delete_darray(a->products, &delete_rcomponent);
-
-	if(a->components)
-		delete_darray(a->components, &delete_rcomponent);
-	free(a);
-}
-
-static void delete_rcomponent(void *rcomponent)
-{
-	free(rcomponent);
-}
-
 void print_item(void *item)
 {
 	Item *a;
@@ -137,50 +149,27 @@ void print_item(void *item)
 		"Item id: %d\nUsed in %d recipes\n", a->data->name, a->id, a->used_in->size);
 	//print_darray(a->used_in, &inner_print_recipe);//type change
 	printf("Can be crafted:\n");
-	print_darray(a->recipes, &inner_print_recipe);
+	print_darray(a->recipes, &inner_print_recipe, NULL);
 	printf("----end of item----\n");
 }
+
 void print_recipe(Recipe *a)
 {
-	inner_print_recipe(a);
+	inner_print_recipe(a, NULL);
 	return;
 }
 
-static void inner_print_recipe(void *a)
+static void inner_print_recipe(void *a, void *params)
 {
 	Recipe *tmp = a;
 	printf("Products:\n");
-	print_darray(tmp->products, &print_rcomponent);//type change
+	print_darray(tmp->products, &print_rcomponent, NULL);//type change
 	printf("\nComponents:\n");
-	print_darray(tmp->components, &print_rcomponent);//type change
+	print_darray(tmp->components, &print_rcomponent, NULL);//type change
 	printf("\n");
 }
 
-Recipe* get_recipe(Item *a, int index)
-{
-	return darray_at_pos(a->recipes, index);
-}
-
-Darray* get_components(Item *a, int index)
-{
-    Recipe *tmp = get_recipe(a, index);
-    if(tmp)
-    {
-        return tmp->components;
-    }
-    return NULL;
-}
-
-Darray* get_products(Item *a, int index)
-{
-    Recipe *tmp = get_recipe(a, index);
-    if(tmp)
-    {
-        return tmp->products;
-    }
-    return NULL;
-}
-static void print_rcomponent(void *element)
+static void print_rcomponent(void *element, void *params)
 {
 	Rcomponent *tmp = element;
 	if(tmp)
@@ -198,21 +187,39 @@ static void print_rcomponent(void *element)
 	{
         printf("Error: Rcomponents is equal 0");
 	}
+}
 
-	return;
+Darray* get_components(Item *a, unsigned int recipe_number)
+{
+	Recipe *c;
+	c = darray_at_pos(a->recipes, recipe_number);
+
+	return c ? c->components : NULL;
+}
+
+Darray* get_products(Item *a, unsigned int recipe_number)
+{
+	Recipe *c;
+	c = darray_at_pos(a->recipes, recipe_number);
+	return c ? c->products : NULL;
 }
 
 /*IO Section*/
 
-Item* convert_json_to_item(JSON *a)
+Item* convert_json_to_item(HNode *a)
 {
 	Item *item;
+	JSON *value;
 	int id;
 	item = NULL;
-	if(a->type == type_String)
+	if(a && a->value)
 	{
-		id = str_to_int(a->key);
-		item = create_item(id, a->value.string);
+		id = atoi(a->key);
+		value = a->value;
+		if(value->type == type_string)
+		{
+			item = create_item(id, value->value.string);
+		}
 	}
 	return item;
 }
@@ -223,9 +230,8 @@ JSON* convert_item_to_json(Item *item)
 	if(item)
 	{
 		a = malloc(sizeof(JSON));
-		a->key = int_to_str(item->id);
 		a->value.string = item->data->name;
-		a->type = type_String;
+		a->type = type_string;
 	}
 	return a;
 }
@@ -235,11 +241,11 @@ Rcomponent* convert_json_to_rc(Set *items, JSON *a)
 	JSON *json_id, *json_quantity;
 	Item *ptr;
 	Item f; //used in find function
-	if(a && a->type == type_Object)
+	if(a && a->type == type_object)
 	{
-		json_id = list_at_pos(a->value.object, 1); //replace to hashtable
-		json_quantity = list_at_pos(a->value.object, 0);
-		if(strcmp(json_id->key, "id") == 0 && strcmp(json_quantity->key, "quantity") == 0)//useless with hashtable
+		json_id = hmap_get(a->value.object, "id");
+		json_quantity = hmap_get(a->value.object, "quantity");
+		if(json_id && json_quantity)
 		{
 			f.id = json_id->value.number;
 			ptr = set_find(items, &f, &id_comparison);
@@ -249,16 +255,17 @@ Rcomponent* convert_json_to_rc(Set *items, JSON *a)
 			}
 			else
 			{
-				printf("Rcomponent convert error: item with such id does't exists\n");
+				fprintf(stderr, "Rcomponent convert error: item with id %d doesn't exists\n", f.id);
 			}
 		}
 		else
 		{
-			printf("Rcomponent convert error: rcomponent field name error\n");
+			perror("Rcomponent convert error: rcomponent field name error\n");
 		}
 	}
 	return NULL;
 }
+
 Darray* convert_json_to_rca(Set *items, JSON *a) //rca - recipe component array
 {
 	List *materials_list;
@@ -274,7 +281,7 @@ Darray* convert_json_to_rca(Set *items, JSON *a) //rca - recipe component array
 		unit = convert_json_to_rc(items, json_rcomponent);
 		if(unit)
 		{
-			darray_append(ret, unit);//replace to List maybe??
+			darray_insert(ret, unit, ret->size);//replace to List maybe??
 		}
 	}
 	return ret;
@@ -283,31 +290,25 @@ Recipe* convert_json_to_recipe(Set *items, JSON *a)
 {
 	Recipe *ret;
 	JSON *json_products, *json_components;
-	if(a && a->type == type_Object)
+	if(a && a->type == type_object)
 	{
-		json_components = list_at_pos(a->value.object, 0);//hashtable
-		json_products = list_at_pos(a->value.object, 1);
+		json_components = hmap_get(a->value.object, "components");
+		json_products = hmap_get(a->value.object, "products");
 		if(!json_products || !json_components)
 		{
-			printf("Recipe convert error: missing field\n");
+			perror("Recipe convert error: missing field\n");
 			return NULL;
 		}
-		if(strcmp(json_products->key, "products") == 0 && strcmp(json_components->key, "components") == 0)//hashtable required
+
+		ret = create_recipe();
+		ret->products = convert_json_to_rca(items, json_products);
+		ret->components = convert_json_to_rca(items, json_components);
+		if(ret->products->size == 0 || ret->components->size == 0)
 		{
-			ret = create_recipe();
-			ret->products = convert_json_to_rca(items, json_products);
-			ret->components = convert_json_to_rca(items, json_components);
-			if(ret->products->size == 0 || ret->components->size == 0)
-			{
-				delete_recipe(ret);
-				return NULL;
-			}
-			return ret;
+			delete_recipe(ret);
+			return NULL;
 		}
-		else
-		{
-			printf("Recipe convert error: Invalid field name\n");
-		}
+		return ret;
 	}
 	return NULL;//ret??
 }

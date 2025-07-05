@@ -1,4 +1,6 @@
-#include "advanced_types.h"
+#include "json.h"
+#include "dynamic_array.h"
+#include "set.h"
 
 #ifndef ITEMS_H
 #define ITEMS_H
@@ -14,12 +16,12 @@ typedef struct recipe_component Rcomponent;
 struct item_data
 {
 	char *name;
-	unsigned long price;
+	float price;
 };
 
 struct recipe_data
 {
-	short modifier;
+	short material_efficiency;
 };
 
 struct item
@@ -45,28 +47,31 @@ struct recipe_component
 
 
 Item* create_item(int id, char *name);
-Recipe* create_recipe();
-Rcomponent* create_rcomponent(Item *a, int q);
+void delete_item(void *item, void *parameters);
 
-void delete_item(void *item);
+Recipe* create_recipe();
 void delete_recipe(void *recipe);
+Rcomponent* create_rcomponent(Item *a, int q);
+void delete_rcomponent(void *rcomponent, void *params);
+
 
 bool add_component(Recipe *dst, Rcomponent *element);
 bool add_product(Recipe *dst, Rcomponent *element);
-void link_recipe(Recipe *a);
 
-Recipe* get_recipe(Item *a, int index);
-Darray* get_products(Item *a, int recipe_index);
-Darray* get_components(Item *a, int recipe_index);
+void link_recipe(Recipe *a);
+void unlink_recipe(Recipe *a);
+
 
 int id_comparison(void *a, void *b);
 int rcomponent_comparison(void *a, void *b);
 
+Darray* get_components(Item *a, unsigned int recipe_number);
+Darray* get_products(Item *a, unsigned int recipe_number);
 
 void print_item(void *a);
 void print_recipe(Recipe *a);
 
-Item* convert_json_to_item(JSON *a);
+Item* convert_json_to_item(HNode *a);
 JSON* convert_item_to_json(Item *a);
 
 Rcomponent* convert_json_to_rc(Set *items, JSON *a);

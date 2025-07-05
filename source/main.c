@@ -35,7 +35,7 @@ int main()
 	//print_set(items, tmp_print);
 	/*show_tree(r);
 	printf("\n");*/
-	delete_set(items, delete_item);
+	delete_set(items, delete_item, NULL);
 
 	//need to free array of items*/
 	return 0;

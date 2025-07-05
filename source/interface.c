@@ -45,7 +45,7 @@ void interface_main(Set *items, HMap *table)
 		}
 		else if(strcmp(command, "set") == 0)
 		{
-			selected_item->quantity = str_to_int(parameters[1]);
+			selected_item->quantity = atoi(parameters[1]);
 		}
 		else if(strcmp(command, "show") == 0)
 		{
