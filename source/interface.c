@@ -18,7 +18,7 @@ void interface_main(Set *items, HMap *table)
 		if(nread == -1)
 			printf("User read error in interface function\n");
 		buffer[nread-1] = 0;
-		parameters = mysplit(buffer, ' ', &psize);
+		parameters = str_split(buffer, " ", &psize);
 		command = parameters[0];
 		if(strcmp(command, "exit") == 0)
 			break;

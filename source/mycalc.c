@@ -159,11 +159,11 @@ void zeroLevelPrint(void *element, void *params)
 {
 	Rcomponent *a;
 	a = element;
-	printf("%s %d\n", a->item->data->name, a->quantity);
-	/*if(a->item->recipes->size == 0)
+	//printf("%s %d\n", a->item->data->name, a->quantity);
+	if(a->item->recipes->size == 0)
 	{
 		printf("%s %d\n", a->item->data->name, a->quantity);
-	}*/
+	}
 }
 void debugSurplusPrint(void *b, void *params)
 {
